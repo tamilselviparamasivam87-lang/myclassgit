@@ -1,2 +1,2 @@
-# myclassgit
+myclassgit
 myclass
