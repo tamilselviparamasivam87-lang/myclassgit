@@ -9,7 +9,7 @@ client = OpenAI(
 
 response=client.responses.create(
     model="gpt-5.4-mini",
-    input="current prime minister- india"
+    input="actor ajith kumar"
 
 )
 print(response.output_text)
