@@ -1,10 +1,6 @@
-import os
 from openai import OpenAI
 
-
-client = OpenAI(
-    api_key=os.environ["OPENAI_API_KEY"]
-)
+client = OpenAI()  #openai api key from the env
 
 
 response=client.responses.create(
