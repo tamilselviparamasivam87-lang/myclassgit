@@ -15,23 +15,20 @@ client = OpenAI(
 
 history=[]
 
-while True:
+def chatbot(user_input):
 
-    user_input=input("user : ")
-
-    if user_input =="stop":
-        print("stopping the chat")
-        break
+    print(history)
 
     history.append({
         "role" : "user", 
         "content" : user_input 
+
     })
 
  
     response = client.responses.create(
-      model="openai/gpt-oss-120b",
-      input=history
+       model="openai/gpt-oss-120b",
+       input=history
 
    )
     
@@ -43,4 +40,5 @@ while True:
     })
 
 
-    print("AI :" + response.output_text)
+
+    return res
