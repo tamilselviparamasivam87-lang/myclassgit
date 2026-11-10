@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
+
 from openai import OpenAI
 
 from dotenv import load_dotenv
 
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().with_name(".env"))
 
 key = os.getenv("GROQ_API_KEY")
 
