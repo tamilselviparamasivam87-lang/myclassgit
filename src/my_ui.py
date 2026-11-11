@@ -2,150 +2,245 @@
 import streamlit as st
 import requests
 
-# Page configuration
+# --------------------------------
+# PAGE CONFIGURATION
+# --------------------------------
+
 st.set_page_config(
-    page_title="My AI Chatbot",
+    page_title="AI Chat Assistant",
     page_icon="🤖",
     layout="centered"
 )
 
-# API endpoint
 API_URL = "http://127.0.0.1:8000/my-chatbot"
 
-# Custom CSS
+
+# --------------------------------
+# CUSTOM CSS
+# --------------------------------
+
 st.markdown("""
 <style>
+
 .stApp {
-    background: linear-gradient(135deg, #101827, #1e293b);
+    background: linear-gradient(135deg, #101827, #172554);
     color: white;
 }
 
 .main-title {
     text-align: center;
     font-size: 38px;
-    font-weight: bold;
-    color: #8BBAFF;
-    padding: 10px;
+    font-weight: 800;
+    color: #60A5FA;
+    margin-bottom: 5px;
 }
 
-.subtitle {
+.sub-title {
     text-align: center;
     color: #CBD5E1;
-    font-size: 16px;
+    font-size: 15px;
     margin-bottom: 30px;
 }
 
 .stChatMessage {
+    background-color: #243449;
     border-radius: 15px;
-    padding: 12px;
-}
-
-[data-testid="stChatInput"] {
-    border-radius: 15px;
+    border: 1px solid #334155;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# Initialize chat history
+# --------------------------------
+# SESSION STATE
+# --------------------------------
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "user_id" not in st.session_state:
+    st.session_state.user_id = "user_001"
 
-# Sidebar
+
+# --------------------------------
+# SIDEBAR
+# --------------------------------
+
 with st.sidebar:
-    st.title("🤖 My AI Assistant")
 
-    st.write("Welcome to your personal AI chatbot!")
+    st.title("🤖 AI Assistant")
+
+    st.write("Your personal AI chatbot")
 
     st.divider()
 
-    if st.button("🗑️ Clear Chat", use_container_width=True):
+    st.subheader("User Settings")
+
+    entered_user_id = st.text_input(
+        "Enter User ID",
+        value=st.session_state.user_id
+    )
+
+    # Change user
+    if entered_user_id != st.session_state.user_id:
+
+        st.session_state.user_id = entered_user_id.strip()
+        st.session_state.messages = []
+        st.rerun()
+
+    st.write("Current User:", st.session_state.user_id)
+
+    st.divider()
+
+    # Clear chat
+    if st.button(
+        "🗑️ Clear Conversation",
+        use_container_width=True
+    ):
+
         st.session_state.messages = []
         st.rerun()
 
     st.divider()
 
-    st.caption("Powered by")
-    st.markdown("⚡ Groq LLM")
-    st.markdown("🚀 FastAPI")
-    st.markdown("🎨 Streamlit")
+    st.markdown("### Technology")
+
+    st.write("⚡ Groq LLM")
+    st.write("🚀 FastAPI")
+    st.write("🎨 Streamlit")
+
+    st.divider()
+
+    st.caption("AI Chat Assistant | Python Project")
 
 
-# Main heading
+# --------------------------------
+# MAIN HEADER
+# --------------------------------
+
 st.markdown(
     '<div class="main-title">✨ My AI Chatbot</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">Ask anything. Your AI assistant is ready to help!</div>',
+    '<div class="sub-title">Your intelligent AI assistant. Ask me anything!</div>',
     unsafe_allow_html=True
 )
 
 
-# Welcome message
+# --------------------------------
+# WELCOME MESSAGE
+# --------------------------------
+
 if not st.session_state.messages:
-    st.info("👋 Hello! Welcome. Start a conversation below.")
+
+    st.info(
+        "👋 Welcome! Start a conversation with your AI assistant."
+    )
+
+    st.markdown("### 💡 Try asking")
+
+    st.write("• What is Python?")
+    st.write("• Explain Artificial Intelligence")
+    st.write("• What is Machine Learning?")
 
 
-# Display previous messages
+# --------------------------------
+# DISPLAY CHAT HISTORY
+# --------------------------------
+
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
+
         st.markdown(message["content"])
 
 
-# Chat input
+# --------------------------------
+# USER CHAT INPUT
+# --------------------------------
+
 if prompt := st.chat_input("💬 Type your message here..."):
 
-    # Display user message
-    st.session_state.messages.append({
-        "role": "user",
-        "content": prompt
-    })
+    if not st.session_state.user_id:
 
-    with st.chat_message("user"):
-        st.markdown(prompt)
+        st.error("Please enter a valid User ID.")
 
-    # Get AI response
-    with st.chat_message("assistant"):
+    else:
 
-        with st.spinner("🤖 AI is thinking..."):
+        # Display user message
+        st.session_state.messages.append({
+            "role": "user",
+            "content": prompt
+        })
 
-            try:
-                response = requests.post(
-                    API_URL,
-                    json={"message": prompt},
-                    timeout=60
-                )
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-                response.raise_for_status()
 
-                result = response.json()
+        # --------------------------------
+        # CALL FASTAPI BACKEND
+        # --------------------------------
 
-                ai_response = result["response"]
+        with st.chat_message("assistant"):
 
-            except requests.exceptions.ConnectionError:
-                ai_response = (
-                    "❌ Cannot connect to FastAPI. "
-                    "Please start your backend server."
-                )
+            with st.spinner("🤖 AI is thinking..."):
 
-            except requests.exceptions.Timeout:
-                ai_response = "⏳ Request timed out. Please try again."
+                try:
 
-            except requests.exceptions.RequestException as e:
-                ai_response = f"❌ API Error: {e}"
+                    response = requests.post(
+                        API_URL,
+                        json={
+                            "message": prompt,
+                            "user_id": st.session_state.user_id
+                        },
+                        timeout=90
+                    )
 
-            except (ValueError, KeyError):
-                ai_response = "❌ Invalid response received from the API."
+                    response.raise_for_status()
 
-        st.markdown(ai_response)
+                    result = response.json()
 
-    # Save assistant response
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": ai_response
-    })
+                    ai_response = result["response"]
+
+                except requests.exceptions.ConnectionError:
+
+                    ai_response = (
+                        "❌ Cannot connect to FastAPI. "
+                        "Please start your backend server."
+                    )
+
+                except requests.exceptions.Timeout:
+
+                    ai_response = (
+                        "⏳ Request timed out. Please try again."
+                    )
+
+                except requests.exceptions.HTTPError as e:
+
+                    ai_response = f"❌ Backend HTTP error: {e}"
+
+                except requests.exceptions.RequestException as e:
+
+                    ai_response = f"❌ Request error: {e}"
+
+                except (ValueError, KeyError):
+
+                    ai_response = (
+                        "❌ Invalid response received from backend."
+                    )
+
+            st.markdown(ai_response)
+
+
+        # --------------------------------
+        # SAVE AI RESPONSE
+        # --------------------------------
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": ai_response
+        })
+
